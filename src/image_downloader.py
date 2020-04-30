@@ -1,4 +1,4 @@
-import os.path
+import os
 import asyncio
 import aiohttp
 from asyncio.futures import Future
@@ -19,6 +19,13 @@ from util import *
 # файл с запрещёнными картинками содержит урлы постов
 # файл со скачанными картинками содержит ИМЕНА картинок, не урлы
 
+# записывает список файлов из path в файл filename
+def get_downloaded_names(filename, path="."):
+    name_list = list(filter(lambda x: getExtention(x).lower() in ["jpg", "jpeg", "png", "bmp", "gif"], os.listdir(path)))
+    with open(filename, "a", encoding='utf-8') as f:
+        for e in name_list:
+            f.write(e + '\n')
+
 # удаляет из первого списка урлы, имена файлов которых есть во втором
 def remove_downloaded(url_list, downloaded_names):
     i = 0
@@ -26,7 +33,7 @@ def remove_downloaded(url_list, downloaded_names):
         if getName(url_list[i]) in downloaded_names:
             del url_list[i]
 
-# получает очищенные от дубликатов урлы
+# получает очищенные от дубликатов урлы, по которым можно качать
 def get_urls_to_download(url_filename, downloaded_filename):
     urls = list(set(readFile(url_filename))) # нужно для проверки уникальности
     downloaded = set(readFile(downloaded_filename))
@@ -88,7 +95,7 @@ def cleanWatermark(image_name):
     # норма для ватермарки- 252,196,51
     isWatermarked = (abs(meanR - 252) < 2 and abs(meanG - 196) < 2 and abs(meanB - 51) < 2)
     if isWatermarked:
-        if getExtention(image_name) in ["jpg", "jpeg", "png", "bmp"]: # GIF здесь нет, я пока хз, как их обрабатывать
+        if getExtention(image_name).lower() in ["jpg", "jpeg", "png", "bmp"]: # GIF здесь нет, я пока хз, как их обрабатывать
             cropped = image.crop((0, 0, image.width-1, image.height-15))
             if getExtention(image_name) in ["jpg", "jpeg"]:
                 cropped.save(convertNameToPng(image_name))

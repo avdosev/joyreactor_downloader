@@ -5,7 +5,7 @@ from aiohttp import ClientSession
 # файл для запросов к серверу
 
 LAST_REQUEST_TIME = current_time()
-DEFAULT_WAIT_TIME = 1.
+DEFAULT_WAIT_TIME = 1.5
 SAFE_GET_LOCK = asyncio.Lock()
 
 

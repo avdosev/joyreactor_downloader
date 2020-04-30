@@ -6,7 +6,7 @@ from aiohttp import ClientSession
 
 from util import getName, cutLastFrom, append_to_file
 from reactor_parse import scrapPage, getPrevPages, parse_html
-from safe_get import safe_get
+from safe_get import fetch_html
 
 LAST_REQUEST_TIME = current_time()
 DEFAULT_WAIT_TIME = 0.5
@@ -86,7 +86,7 @@ async def append_to_censored(censored_links):
 # Запрашивает страницу по адресу
 async def download_parsed_page(url, session):
     print("Запрашиваем " + url)
-    html_text = await safe_get(url, session)
+    html_text = await fetch_html(url, session)
     html = parse_html(html_text)
     return html
 

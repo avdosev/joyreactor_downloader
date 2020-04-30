@@ -7,7 +7,8 @@ from reactor_parse import scrapPage, getPrevPages, parse_html
 import os.path
 
 LAST_REQUEST_TIME = current_time()
-DEFAULT_WAIT_TIME = 0.1
+DEFAULT_WAIT_TIME = 0.5
+SAFE_GET_LOCK = asyncio.Lock()
 
 
 # http://old.reactor.cc/tag/Anime
@@ -48,17 +49,32 @@ async def bulk_save_source_image_by_tag(url):
         html = await download_parsed_page(last_page_checked, session)
         tag_pages_list = getPrevPages(url, html)
         try:
-            for page in tag_pages_list:
+            async def download_and_parse(page, session, queue):
                 html = await download_parsed_page(page, session)
                 result = scrapPage(html)
                 src_list = result['links']
                 censored_list = result['censored']
-                # следующий кусок кода независимый друг от друга и мы можем выполнить их паралельно
-                await asyncio.gather(*[
-                    append_to_file(src_list, output_name),
-                    append_to_censored(censored_list)
-                ])
-                last_page_checked = page
+                await queue.put((src_list, censored_list, page))
+
+            async def load_parsed_data_to_file(queue):
+                nonlocal last_page_checked
+                while True:
+                    src_list, censored_list, page = await queue.get()
+                    last_page_checked = page
+                    # следующий кусок кода независимый друг от друга и мы можем выполнить их паралельно
+                    await asyncio.gather(*[
+                        append_to_file(src_list, output_name),
+                        append_to_censored(censored_list)
+                    ])
+                    queue.task_done()
+
+            queue = asyncio.Queue()
+            producers = [asyncio.create_task(download_and_parse(page, session, queue)) for page in tag_pages_list]
+            file_loader = asyncio.create_task(load_parsed_data_to_file(queue))
+            await asyncio.gather(*producers)
+            await queue.join()
+            file_loader.cancel()
+            await asyncio.gather(file_loader, return_exceptions=True)
         except KeyboardInterrupt:
             with open(filename, "w") as f:
                 print(f"Последняя страница", last_page_checked, "сохранена")
@@ -69,10 +85,10 @@ async def append_to_censored(censored_links):
     await append_to_file(censored_links, "logs/censored.txt")
 
 
-async def append_to_file(arr, filename: str):
+async def append_to_file(lines, filename: str):
     async with aiofiles.open(filename, "a") as f:
-        for e in arr:
-            await f.write(e + '\n')
+        for line in lines:
+            await f.write(line + '\n')
 
 
 # Запрашивает страницу по адресу
@@ -87,14 +103,16 @@ async def download_parsed_page(url, session):
 
 # Делает запрос с учётом времени между запросами
 async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
-    global LAST_REQUEST_TIME
-
+    global LAST_REQUEST_TIME, SAFE_GET_LOCK
     sleep_time = 0
-    if abs(current_time() - LAST_REQUEST_TIME) < wait_time:
-        sleep_time = abs(current_time() - LAST_REQUEST_TIME)
+    async with SAFE_GET_LOCK:
+        if abs(current_time() - LAST_REQUEST_TIME) < wait_time:
+            sleep_time = abs(current_time() - LAST_REQUEST_TIME)
 
-    LAST_REQUEST_TIME = current_time() + sleep_time
+        LAST_REQUEST_TIME = current_time() + sleep_time
+
     if sleep_time > 0:
+        print(sleep_time)
         await asyncio.sleep(sleep_time)
     return await session.request(method="GET", url=url, **kwargs)
 

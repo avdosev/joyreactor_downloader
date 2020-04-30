@@ -80,10 +80,9 @@ async def append_to_censored(censored_links):
 
 # Запрашивает страницу по адресу
 async def download_parsed_page(url, session):
-    print("Запрашиваем " + url)
     html_text = await fetch_html(url, session)
     html = parse_html(html_text)
     return html
 
 if __name__ == "__main__":
-    asyncio.run(bulk_save_source_image_by_tag("http://old.reactor.cc/tag/Anime/all"))
+    asyncio.run(bulk_save_source_image_by_tag("http://old.reactor.cc/tag/latenight/all"))

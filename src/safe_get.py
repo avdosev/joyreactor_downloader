@@ -33,6 +33,7 @@ async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
     if sleep_time > 0:
         #print(sleep_time)
         await asyncio.sleep(sleep_time)
-    print(current_time())
+
+    print(str.format("Запрашиваем {0}, время:{1}", url, current_time()))
     return await session.request(method="GET", url=url, **kwargs)
 

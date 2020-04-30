@@ -12,24 +12,24 @@ DEFAULT_WAIT_TIME = 0.1
 
 # http://old.reactor.cc/tag/Anime
 
-# final - функция предназначена для непосредственного использования
 # download - качает указанные картинки
 # saveSrc - сохраняет ссылки на указанные картинки
 # bulk - при прерывании по Ctrl+C сохраняет наработки и при следующем вызове продолжает работу
 
-async def final_bulkSaveSrc_imageFromTag(url):
+async def bulk_save_source_image_by_tag(url):
     # считать прогресс
     # в файле записана последняя проверенная страница
     last_page_checked = url
-    filename = "temp/" + getName(url) + "_bulkSaveSrc_imageFromTag.txt"
-
     name = getName(url)
-    if name in ["all", "best", "new"]:
+
+    filename = os.path.join("temp", f"{name}_bulkSaveSrc_imageFromTag.txt")
+
+    if name in {"all", "best", "new"}:
         print(str.format("убираем {0}...", name))
         name = getName(cutLastFrom(url, '/'))
         print(str.format("получаем {0}", name))
 
-    output_name = "url_" + name + ".txt"
+    output_name = f"url_{name}.txt"
     if os.path.isfile(filename):  # если файла нет, то и прогресс не надо считывать
         print("найден файл прогресса")
         with open(filename, "r") as f:
@@ -41,15 +41,15 @@ async def final_bulkSaveSrc_imageFromTag(url):
         last_page_checked = url
         print("файл прогресса пуст")
     else:
-        print(str.format("продолжаем с {0}", last_page_checked))
+        print("продолжаем с ", last_page_checked)
 
     # продолжить
     async with ClientSession() as session:
-        html = await getPage(last_page_checked, session)
+        html = await download_parsed_page(last_page_checked, session)
         tag_pages_list = getPrevPages(url, html)
         try:
             for page in tag_pages_list:
-                html = await getPage(page, session)
+                html = await download_parsed_page(page, session)
                 result = scrapPage(html)
                 src_list = result['links']
                 censored_list = result['censored']
@@ -76,26 +76,17 @@ async def append_to_file(arr, filename: str):
 
 
 # Запрашивает страницу по адресу
-async def getPage(url, session):
+async def download_parsed_page(url, session):
     print("Запрашиваем " + url)
-    html_text = await safeGet(url, session)
-    html = parse_html(html_text)
-    return html
-
-
-async def fetch_html(url: str, session: ClientSession, **kwargs) -> str:
-    """
-    GET запрос оболочки для загрузки страницы HTML.
-    kwargs передаются в session.request().
-    """
-    resp = await session.request(method="GET", url=url, **kwargs)
+    resp = await safe_get(url, session)
     resp.raise_for_status()
     html = await resp.text()
+    html = parse_html(html)
     return html
 
 
 # Делает запрос с учётом времени между запросами
-async def safeGet(url, session, wait_time=DEFAULT_WAIT_TIME):
+async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
     global LAST_REQUEST_TIME
 
     sleep_time = 0
@@ -105,8 +96,8 @@ async def safeGet(url, session, wait_time=DEFAULT_WAIT_TIME):
     LAST_REQUEST_TIME = current_time() + sleep_time
     if sleep_time > 0:
         await asyncio.sleep(sleep_time)
-    return await fetch_html(url, session)
+    return await session.request(method="GET", url=url, **kwargs)
 
 
 if __name__ == "__main__":
-    asyncio.run(final_bulkSaveSrc_imageFromTag("http://old.reactor.cc/tag/Anime/all"))
+    asyncio.run(bulk_save_source_image_by_tag("http://old.reactor.cc/tag/Anime/all"))

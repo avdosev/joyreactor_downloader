@@ -28,9 +28,9 @@ async def bulk_save_source_image_by_tag(url):
         print(str.format("получаем {0}", name))
 
     #progress_file_name = os.path.join("temp", f"{name}_bulkSaveSrc_imageFromTag.txt")
-    progress_file_name = f"{name}_lastpage.txt"
+    progress_file_name = f"output/{name}_lastpage.txt"
 
-    output_name = f"url_{name}.txt"
+    output_name = f"output/url_{name}.txt"
     if os.path.isfile(progress_file_name):  # если файла нет, то и прогресс не надо считывать
         print("найден файл прогресса")
         with open(progress_file_name, "r") as f:
@@ -65,7 +65,7 @@ async def load_parsed_data_to_file(queue, output_name):
         # следующий кусок кода независимый друг от друга и мы можем выполнить их паралельно
         await asyncio.gather(*[
             append_to_file(src_list, output_name),
-            append_to_file(censored_list, "censored.txt")
+            append_to_file(censored_list, "output/censored.txt")
         ])
         print(str.format("Страница {0} обработана", page))
         queue.task_done()
@@ -101,7 +101,7 @@ if __name__ == "__main__":
         if name in {"all", "best", "new"}:
             name = getName(cutLastFrom(url_to_download, '/'))
 
-        progress_file_name = f"{name}_lastpage.txt"
+        progress_file_name = f"output/{name}_lastpage.txt"
         with open(progress_file_name, "w") as f:
             print(f"Последняя страница ", LAST_PAGE_CHECKED, " сохранена")
             f.write(LAST_PAGE_CHECKED)

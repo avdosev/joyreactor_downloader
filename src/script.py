@@ -8,11 +8,6 @@ from util import getName, cutLastFrom, append_to_file
 from reactor_parse import scrapPage, getPrevPages, parse_html
 from safe_get import safe_get
 
-LAST_REQUEST_TIME = current_time()
-DEFAULT_WAIT_TIME = 0.5
-SAFE_GET_LOCK = asyncio.Lock()
-
-
 # download - качает указанные картинки
 # saveSrc - сохраняет ссылки на указанные картинки
 # bulk - при прерывании по Ctrl+C сохраняет наработки и при следующем вызове продолжает работу
@@ -77,7 +72,7 @@ async def bulk_save_source_image_by_tag(url):
             await asyncio.gather(file_loader, return_exceptions=True)
         except KeyboardInterrupt:
             with open(filename, "w") as f:
-                print(f"Последняя страница", last_page_checked, "сохранена")
+                print(f"Последняя страница ", last_page_checked, " сохранена")
                 f.write(last_page_checked)
 
 async def append_to_censored(censored_links):

@@ -24,12 +24,14 @@ async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
     global LAST_REQUEST_TIME, SAFE_GET_LOCK
     sleep_time = 0
     async with SAFE_GET_LOCK:
-        if abs(current_time() - LAST_REQUEST_TIME) < wait_time:
-            sleep_time = abs(current_time() - LAST_REQUEST_TIME)
+        if current_time() - LAST_REQUEST_TIME < wait_time:
+            sleep_time = LAST_REQUEST_TIME + wait_time - current_time()
 
-        LAST_REQUEST_TIME = current_time() + sleep_time
+        LAST_REQUEST_TIME = LAST_REQUEST_TIME + wait_time
 
     if sleep_time > 0:
-        print(sleep_time)
+        #print(sleep_time)
         await asyncio.sleep(sleep_time)
+    print(current_time())
     return await session.request(method="GET", url=url, **kwargs)
+

@@ -4,7 +4,7 @@ import aiohttp
 from asyncio.futures import Future
 from typing import List
 from PIL import Image
-from safe_get import safeGet
+from safe_get import safe_get
 
 from util import *
 
@@ -57,7 +57,7 @@ def downloadFromLinks(links):
 # Скачивает картинку по ссылке
 def downloadImage(url, name=""):
     print("Качаем " + url)
-    req = safeGet(url)
+    req = safe_get(url)
     if (req.status_code != 200):
         print("Запрос к " + url + " завершился с кодом " + req.status_code)
         return None

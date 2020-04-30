@@ -1,13 +1,12 @@
-from util import getLastFrom, cutLastFrom
 from bs4 import BeautifulSoup as BS
 
-# Со страницы ленты парсит ссылки на все соусы и запрещённые посты
-# формат: {"links":, "censored":}
+from util import getLastFrom, cutLastFrom
 
 def parse_html(text):
     return BS(text, 'html.parser')
 
-
+# Со страницы ленты парсит ссылки на все соусы и запрещённые посты
+# формат: {"links":, "censored":}
 def scrapPage(parsed_content):
     posts = parsed_content.findAll(class_="postContainer")
     link_arr = []

@@ -1,10 +1,12 @@
-import asyncio
-import aiofiles
-from aiohttp import ClientSession
 from time import time as current_time
-from util import getName, cutLastFrom
-from reactor_parse import scrapPage, getPrevPages, parse_html
 import os.path
+
+import asyncio
+from aiohttp import ClientSession
+
+from util import getName, cutLastFrom, append_to_file
+from reactor_parse import scrapPage, getPrevPages, parse_html
+from safe_get import safeGet
 
 LAST_REQUEST_TIME = current_time()
 DEFAULT_WAIT_TIME = 0.1
@@ -64,16 +66,8 @@ async def final_bulkSaveSrc_imageFromTag(url):
                 print(f"Последняя страница", last_page_checked, "сохранена")
                 f.write(last_page_checked)
 
-
 async def append_to_censored(censored_links):
     await append_to_file(censored_links, "logs/censored.txt")
-
-
-async def append_to_file(arr, filename: str):
-    async with aiofiles.open(filename, "a") as f:
-        for e in arr:
-            await f.write(e + '\n')
-
 
 # Запрашивает страницу по адресу
 async def getPage(url, session):
@@ -81,31 +75,6 @@ async def getPage(url, session):
     html_text = await safeGet(url, session)
     html = parse_html(html_text)
     return html
-
-
-async def fetch_html(url: str, session: ClientSession, **kwargs) -> str:
-    """
-    GET запрос оболочки для загрузки страницы HTML.
-    kwargs передаются в session.request().
-    """
-    resp = await session.request(method="GET", url=url, **kwargs)
-    resp.raise_for_status()
-    html = await resp.text()
-    return html
-
-
-# Делает запрос с учётом времени между запросами
-async def safeGet(url, session, wait_time=DEFAULT_WAIT_TIME):
-    global LAST_REQUEST_TIME
-
-    sleep_time = 0
-    if abs(current_time() - LAST_REQUEST_TIME) < wait_time:
-        sleep_time = abs(current_time() - LAST_REQUEST_TIME)
-
-    LAST_REQUEST_TIME = current_time() + sleep_time
-    if sleep_time > 0:
-        await asyncio.sleep(sleep_time)
-    return await fetch_html(url, session)
 
 
 if __name__ == "__main__":

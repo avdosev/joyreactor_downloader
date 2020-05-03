@@ -56,6 +56,7 @@ async def bulk_save_source_image_by_tag(url):
         file_loader.cancel()
         await asyncio.gather(file_loader, return_exceptions=True)
 
+
 async def load_parsed_data_to_file(queue, output_name):
     global LAST_PAGE_CHECKED
     while True:
@@ -63,12 +64,13 @@ async def load_parsed_data_to_file(queue, output_name):
         print(str.format("Начата обработка страницы {0}", page))
         LAST_PAGE_CHECKED = page
         # следующий кусок кода независимый друг от друга и мы можем выполнить их паралельно
-        await asyncio.gather(*[
+        await asyncio.gather(
             append_to_file(src_list, output_name),
             append_to_file(censored_list, "output/censored.txt")
-        ])
+        )
         print(str.format("Страница {0} обработана", page))
         queue.task_done()
+
 
 async def download_and_parse(page, session, queue):
     html = await download_parsed_page(page, session)
@@ -76,6 +78,7 @@ async def download_and_parse(page, session, queue):
     src_list = result['links']
     censored_list = result['censored']
     await queue.put((src_list, censored_list, page))
+
 
 # Запрашивает страницу по адресу
 async def download_parsed_page(url, session):

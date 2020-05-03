@@ -1,6 +1,8 @@
 from time import time as current_time
 import asyncio
 from aiohttp import ClientSession
+from datetime import datetime
+
 
 # файл для запросов к серверу
 
@@ -31,9 +33,8 @@ async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
         LAST_REQUEST_TIME = LAST_REQUEST_TIME + wait_time
 
     if sleep_time > 0:
-        #print(sleep_time)
         await asyncio.sleep(sleep_time)
 
-    print(str.format("Запрашиваем {0}, время:{1}", url, current_time()))
+    print(f"Запрашиваем {url}, время: {datetime.now().strftime('%H:%M:%S')}")
     return await session.request(method="GET", url=url, **kwargs)
 

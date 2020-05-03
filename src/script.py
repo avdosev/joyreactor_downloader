@@ -29,6 +29,8 @@ async def bulk_save_source_image_by_tag(url):
 
     #progress_file_name = os.path.join("temp", f"{name}_bulkSaveSrc_imageFromTag.txt")
     progress_file_name = f"output/{name}_lastpage.txt"
+    if not os.path.exists("output"):
+        os.mkdir("output")
 
     output_name = f"output/url_{name}.txt"
     if os.path.isfile(progress_file_name):  # если файла нет, то и прогресс не надо считывать

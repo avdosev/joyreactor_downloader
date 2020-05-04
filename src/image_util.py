@@ -1,10 +1,11 @@
 from PIL import Image
 from util import *
+import io
+
 
 # Убирает ватермарку, если она есть
-def cleanWatermark(image_name):
-    print("Убираем ватермарку с " + image_name)
-    image = Image.open(image_name)
+def clean_watermark(image_io: io.BinaryIO, out_io: io.BinaryIO):
+    image = Image.open(image_io)
     # определяем, есть ли ватермарка
     # это определяется по среднему цвету нижних пикселей
     sumR = sumG = sumB = 0
@@ -23,13 +24,12 @@ def cleanWatermark(image_name):
     # норма для ватермарки- 252,196,51
     isWatermarked = (abs(meanR - 252) < 2 and abs(meanG - 196) < 2 and abs(meanB - 51) < 2)
     if isWatermarked:
-        if getExtention(image_name).lower() in ["jpg", "jpeg", "png",
-                                                "bmp"]:  # GIF здесь нет, я пока хз, как их обрабатывать
+        if image.format().lower() in ["jpg",
+                                      "jpeg",
+                                      "png",
+                                      "bmp"]:  # GIF здесь нет, я пока хз, как их обрабатывать
             cropped = image.crop((0, 0, image.width - 1, image.height - 15))
-            if getExtention(image_name) in ["jpg", "jpeg"]:
-                cropped.save(convertNameToPng(image_name))
-            else:
-                cropped.save(image_name)
+            cropped.save(out_io, 'png', quality=100)
             return 'cropped'
         else:
             return 'unknown format'

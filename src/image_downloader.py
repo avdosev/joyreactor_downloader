@@ -1,11 +1,12 @@
 import os
 import asyncio
 import aiohttp
+import aiofiles
 from asyncio.futures import Future
 from typing import List
-from PIL import Image
-from safe_get import safe_get
 
+from safe_get import safe_get
+from image_util import cleanWatermark
 from util import *
 
 
@@ -30,22 +31,12 @@ def get_downloaded_names(filename, path="."):
             f.write(e + '\n')
 
 
-# удаляет из первого списка урлы, имена файлов которых есть во втором
-def remove_downloaded(url_list, downloaded_names):
-    i = 0
-    while i < len(url_list):
-        if getName(url_list[i]) in downloaded_names:
-            del url_list[i]
-
-
 # получает очищенные от дубликатов урлы, по которым можно качать
 def get_urls_to_download(url_filename, downloaded_filename):
     with open(url_filename, 'r') as f, open(downloaded_filename, 'r') as f2:
-        urls = list(set(f))  # нужно для проверки уникальности
+        urls = set(f)  # нужно для проверки уникальности
         downloaded = set(f2)
-        remove_downloaded(urls, downloaded)
-
-    return urls
+        return list(urls - downloaded)
 
 
 # скачивает картинки по переданным ссылкам
@@ -55,7 +46,7 @@ def downloadFromLinks(links):
     broken_links = []
     with open("logs/downloaded.txt", "a") as f:
         for link in links:
-            filename = downloadImage(link)
+            filename = download_image(link)
             if filename is not None:
                 cleanWatermark(filename)
                 new_links.append(link)
@@ -71,49 +62,18 @@ def downloadFromLinks(links):
 
 
 # Скачивает картинку по ссылке
-def downloadImage(url, name=""):
+async def download_image(url, session, filename, **kwargs):
     print("Качаем " + url)
-    req = safe_get(url)
-    if (req.status_code != 200):
-        print("Запрос к " + url + " завершился с кодом " + req.status_code)
-        return None
-    filename = "i/" + name + getName(url)
-    out = open(filename, "wb")
-    out.write(req.content)
-    out.close()
-    return filename
+    resp = await safe_get(url, session, **kwargs)
+    if resp.status != 200:
+        print("Запрос к " + url + " завершился с кодом " + resp.status)
+        return False
+
+    # "i/" + name + getName(url)
+    async with aiofiles.open(filename, "wb") as out:
+        await out.write(await resp.read())
+
+    return True
 
 
-# Убирает ватермарку, если она есть
-def cleanWatermark(image_name):
-    print("Убираем ватермарку с " + image_name)
-    image = Image.open(image_name)
-    # определяем, есть ли ватермарка
-    # это определяется по среднему цвету нижних пикселей
-    sumR = sumG = sumB = 0
-    for x in range(image.width):
-        pixel = image.getpixel((x, image.height - 1))
-        r = pixel[0]
-        g = pixel[1]
-        b = pixel[2]
-        sumR += r
-        sumG += g
-        sumB += b
-    meanR = sumR / image.width
-    meanG = sumG / image.width
-    meanB = sumB / image.width
-    # норма для ватермарки- 252,196,51
-    isWatermarked = (abs(meanR - 252) < 2 and abs(meanG - 196) < 2 and abs(meanB - 51) < 2)
-    if isWatermarked:
-        if getExtention(image_name).lower() in ["jpg", "jpeg", "png",
-                                                "bmp"]:  # GIF здесь нет, я пока хз, как их обрабатывать
-            cropped = image.crop((0, 0, image.width - 1, image.height - 15))
-            if getExtention(image_name) in ["jpg", "jpeg"]:
-                cropped.save(convertNameToPng(image_name))
-            else:
-                cropped.save(image_name)
-            return 'cropped'
-        else:
-            return 'unknown format'
-    else:
-        return 'no watermark'
+

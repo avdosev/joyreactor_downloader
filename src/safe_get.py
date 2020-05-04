@@ -22,6 +22,14 @@ async def fetch_html(url: str, session: ClientSession, **kwargs) -> str:
     return html
 
 
+# Скачивает картинку по ссылке
+async def download_image(url, session, **kwargs):
+    print("Качаем " + url)
+    resp = await safe_get(url, session, **kwargs)
+    resp.raise_for_status()
+    return await resp.read()
+
+
 # Делает запрос с учётом времени между запросами
 async def safe_get(url, session, wait_time=DEFAULT_WAIT_TIME, **kwargs):
     global LAST_REQUEST_TIME, SAFE_GET_LOCK

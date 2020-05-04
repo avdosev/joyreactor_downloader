@@ -26,7 +26,7 @@ from util import *
 # записывает список файлов из path в файл filename
 def get_downloaded_names(filename, path="."):
     name_list = filter(lambda x: getExtention(x).lower() in ["jpg", "jpeg", "png", "bmp", "gif"], os.listdir(path))
-    with open(filename, "a", encoding='utf-8') as f:
+    with open(filename, "w", encoding='utf-8') as f:
         for e in name_list:
             f.write(e + '\n')
 
@@ -48,27 +48,33 @@ async def download_by_links(links, session):
     broken_links = []
 
     for link in links:
-        filename = "i/" + getName(link) + ".png"
+        link = link[:-1]
+        filename = convertNameToPng("output/images/" + getName(link))
         try:
-            with open(filename, 'wb') as out_image:
-                clean_watermark(io.BytesIO(await download_image(link, session)), out_image)
-                new_links.append(link)
+            image_buff = await download_image(link, session, wait_time=0.3)
+            out_buff = io.BytesIO()
+            clean_watermark(io.BytesIO(image_buff), out_buff)
+            asyncio.create_task(write_binary_buffer_to_file(filename, out_buff.getvalue()))
+            new_links.append(link)
         except aiohttp.ClientResponseError:
             print(f"На {link} мы соснули бибос")
             broken_links.append(link)
 
     await asyncio.gather(
-        append_to_file(new_links, "logs/downloaded.txt"),
-        append_to_file(broken_links, "logs/broken.txt")
+        asyncio.Task.all_tasks(),
+        append_to_file(new_links, "output/downloaded.txt"),
+        append_to_file(broken_links, "output/broken.txt")
     )
 
 
-# Скачивает картинку по ссылке
-async def download_image(url, session, **kwargs):
-    print("Качаем " + url)
-    resp = await safe_get(url, session, **kwargs)
-    resp.raise_for_status()
-    return await resp.read()
+async def main():
+    get_downloaded_names("output/downloaded.txt")
+    urls = get_urls_to_download("output/url_latenight.txt",
+                                "output/downloaded.txt")
+    async with aiohttp.ClientSession() as session:
+        await download_by_links(urls, session)
 
 
+if __name__ == "__main__":
+    asyncio.run(main())
 

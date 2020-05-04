@@ -4,7 +4,7 @@ import io
 
 
 # Убирает ватермарку, если она есть
-def clean_watermark(image_io: io.BinaryIO, out_io: io.BinaryIO):
+def clean_watermark(image_io, out_io):
     image = Image.open(image_io)
     # определяем, есть ли ватермарка
     # это определяется по среднему цвету нижних пикселей
@@ -24,10 +24,10 @@ def clean_watermark(image_io: io.BinaryIO, out_io: io.BinaryIO):
     # норма для ватермарки- 252,196,51
     isWatermarked = (abs(meanR - 252) < 2 and abs(meanG - 196) < 2 and abs(meanB - 51) < 2)
     if isWatermarked:
-        if image.format().lower() in ["jpg",
-                                      "jpeg",
-                                      "png",
-                                      "bmp"]:  # GIF здесь нет, я пока хз, как их обрабатывать
+        if image.format.lower() in {"jpg",
+                                    "jpeg",
+                                    "png",
+                                    "bmp"}:  # GIF здесь нет, я пока хз, как их обрабатывать
             cropped = image.crop((0, 0, image.width - 1, image.height - 15))
             cropped.save(out_io, 'png', quality=100)
             return 'cropped'

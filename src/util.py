@@ -1,14 +1,15 @@
 import aiofiles
 import os
 
+
 # Убирает формат и ставит вместо него png
 def convertNameToPng(image_name):
-    replaceAfter(image_name, '.', 'png')
+    return replaceAfter(image_name, '.', 'png')
 
 
 def replaceAfter(string:str, symbol:str, replace_with:str):
-    i = string.rfind(symbol)
-    return string[:-i+1] + replace_with
+    i = string.find(symbol)
+    return string[:i+1] + replace_with
 
 
 # Вычленяет расширение картинки из её url
@@ -37,3 +38,10 @@ async def append_to_file(arr, filename: str, separator='\n'):
     async with aiofiles.open(filename, "a") as f:
         for element in arr:
             await f.write(element + separator)
+
+
+async def write_binary_buffer_to_file(filename: str, data):
+    print(f"start write file {filename}")
+    async with aiofiles.open(filename, 'wb') as f:
+        await f.write(data)
+    print(f"end write file {filename}")

@@ -5,7 +5,7 @@ import aiofiles
 from asyncio.futures import Future
 from typing import List
 
-from safe_get import safe_get
+from safe_get import download_image
 from image_util import clean_watermark
 import io
 from util import *

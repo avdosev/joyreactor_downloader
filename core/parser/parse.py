@@ -22,8 +22,8 @@ def get_tag_page(tag: str, page: int = 1):
     return json.loads(r.text)
 
 
-def extract_main_info(j):
-    print(json.dumps(j, ensure_ascii=False, indent=2))
+def extract_main_info(j, log=False):
+    if log: print(json.dumps(j, ensure_ascii=False, indent=2))
     return {
         'pages':  round(j['data']['blog']['postPager']['count'] / 10),
         'posts': [

@@ -7,3 +7,4 @@ src/__pycache__
 output
 images
 *.db
+parser_state*

@@ -3,7 +3,7 @@ from pprint import pprint
 from parse import *
 import sqlite3
 from db import *
-home = '..'
+home = '../..'
 with open(f'{home}/config.json') as f:
     config = json.load(f)
 

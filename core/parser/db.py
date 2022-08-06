@@ -37,16 +37,23 @@ def insert_post2tag(post2tags, conn):
     cur.executemany("INSERT OR IGNORE INTO posts2tags (postid, tagid) VALUES((SELECT id from posts WHERE posts.key = ?), (SELECT id from tags  WHERE tags.name = ?));", post2tags)
     return conn.commit()
 
-def select_tags(tagIds, conn):
+def select_tags(conn):
     cur = conn.cursor()
     sqlite_select_query = """SELECT * from tags"""
     cur.execute(sqlite_select_query)
     records = cur.fetchall()
     return records
 
-def select_posts(postKeys, conn):
+def select_posts(conn):
     cur = conn.cursor()
     sqlite_select_query = """SELECT * from posts"""
+    cur.execute(sqlite_select_query)
+    records = cur.fetchall()
+    return records
+
+def select_posts2tags(conn):
+    cur = conn.cursor()
+    sqlite_select_query = """SELECT * from posts2tags"""
     cur.execute(sqlite_select_query)
     records = cur.fetchall()
     return records

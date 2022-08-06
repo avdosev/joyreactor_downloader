@@ -6,3 +6,4 @@ url_*
 src/__pycache__
 output
 images
+*.db

@@ -1,7 +1,7 @@
 from sqlite3 import Connection
 import sqlite3
-from find_lang import *
-from parser.db import *
+from core.find_lang import *
+from core.parser.db import *
 
 def gen_sql_from_ast(ast, depth=1):
     values = []
@@ -21,19 +21,19 @@ def gen_sql_from_ast(ast, depth=1):
     
     return ''.join(map(lambda s: ' '*depth + s, values))
 
-def gen_sql(s):
+def gen_sql(s, log=False):
     terms = extract_terms(s)
     elements = prepare_terms(terms)
-    print(elements)
+    if log: print(elements)
     ast = make_ast(elements)
-    pprint(ast)
+    if log: pprint(ast)
 
     return gen_sql_from_ast(ast)
 
-def find(s, conn: Connection):
-    sql = gen_sql(s)
+def find(s, conn: Connection, log=False):
+    sql = gen_sql(s, log=log)
     req = f'SELECT posts.key FROM posts, (\n{sql}) as postsIds where posts.id=postsIds.postid;'
-    print(req)
+    if log: print(req)
     cur = conn.cursor()
     cur.execute(req)
     records = cur.fetchall()
@@ -47,5 +47,5 @@ if __name__ == '__main__':
     db = sqlite3.connect(f'{home}/data.db')
     print(select_tags(db))
     print(select_posts2tags(db))
-    records = find("anime yuki", db)
+    records = find("anime yuki", db, log=True)
     print(records)

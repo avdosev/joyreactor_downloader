@@ -25,11 +25,12 @@ def get_tag_page(tag: str, page: int = 1):
 def extract_main_info(j, log=False):
     if log: print(json.dumps(j, ensure_ascii=False, indent=2))
     return {
-        'pages':  round(j['data']['blog']['postPager']['count'] / 10),
+        'pages':  round(j['data']['blog']['postPager']['count'] / 12),
         'posts': [
             {
                 'id': post['id'],
-                'tags': [blog['tag'] for blog in post['blogs']]
+                'tags': [blog['tag'] for blog in post['blogs']],
+                'images': [attribute['id'] for attribute in post['attributes'] if attribute['type'] == 'PICTURE'],
             } for post in j['data']['blog']['postPager']['posts']
         ],
     }

@@ -14,6 +14,12 @@ def create_tables(conn):
     UNIQUE(postid, tagid) ON CONFLICT IGNORE
     );
     """)
+    cur.execute("""CREATE TABLE IF NOT EXISTS post_images (
+    id INTEGER PRIMARY KEY,
+    postid INTEGER,
+    key TEXT
+    );
+    """)
     cur.execute("""CREATE TABLE IF NOT EXISTS tags (
     id INTEGER PRIMARY KEY,
     name TEXT UNIQUE,
@@ -30,12 +36,17 @@ def insert_tags(tags, conn: Connection):
 def insert_posts(posts, conn):
     cur = conn.cursor()
     cur.executemany("INSERT OR IGNORE INTO posts (id, key) VALUES(?, ?);", posts)
-    return conn.commit()
+    conn.commit()
+
+def insert_post_images(images, conn):
+    cur = conn.cursor()
+    cur.executemany("INSERT OR IGNORE INTO post_images (id, postid, key) VALUES(?, (SELECT id from posts WHERE posts.key = ?), ?);", images)
+    conn.commit()
 
 def insert_post2tag(post2tags, conn):
     cur = conn.cursor()
     cur.executemany("INSERT OR IGNORE INTO posts2tags (postid, tagid) VALUES((SELECT id from posts WHERE posts.key = ?), (SELECT id from tags  WHERE tags.name = ?));", post2tags)
-    return conn.commit()
+    conn.commit()
 
 def select_tags(conn):
     cur = conn.cursor()
@@ -68,6 +79,8 @@ def insert_info(rx, conn):
     insert_posts(posts, conn)
     posts2tag = list(chain.from_iterable([(post['id'], tag) for tag in post['tags']] for post in rx['posts']))
     insert_post2tag(posts2tag, conn)
+    post_images = list(chain.from_iterable([(None, post['id'], imageId) for imageId in post['images']] for post in rx['posts']))
+    insert_post_images(post_images, conn)
 
 
     

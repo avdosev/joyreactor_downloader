@@ -8,3 +8,4 @@ output
 images
 *.db
 parser_state*
+json.json

@@ -1,5 +1,6 @@
 import json
 from pprint import pprint
+import time
 from parse import *
 import sqlite3
 from db import *
@@ -10,6 +11,10 @@ def flush_state():
     global state
     with open(f'{home}/parser_state.json', 'w', encoding='utf-8') as f:
             json.dump(state, f)
+
+def flush_json(j):
+    with open(f'{home}/json.json', 'w', encoding='utf-8') as f:
+            json.dump(j, f, ensure_ascii=False, indent=2)
 
 def main():
     global state
@@ -38,16 +43,17 @@ def main():
             print(f'tag:{tag} page:{page} limit:{limit}')
             try:
                 result = get_tag_page(tag, page=page)
+                flush_json(result)
             except:
                 print('stoped on', page, 'page with limit', limit)
                 flush_state()
                 return
             print('end')
             rx = extract_main_info(result)
-            # pprint(rx)
             insert_info(rx, db)
             limit = rx['pages']
             page += 1
+            time.sleep(1.5)
         flush_state()
 
 if __name__ == '__main__':

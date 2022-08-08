@@ -17,7 +17,8 @@ def create_tables(conn):
     cur.execute("""CREATE TABLE IF NOT EXISTS post_images (
     id INTEGER PRIMARY KEY,
     postid INTEGER,
-    key TEXT
+    key TEXT,
+    UNIQUE(postid, key) ON CONFLICT IGNORE
     );
     """)
     cur.execute("""CREATE TABLE IF NOT EXISTS tags (

@@ -32,7 +32,16 @@ def gen_sql(s, log=False):
 
 def find(s, conn: Connection, log=False):
     sql = gen_sql(s, log=log)
-    req = f'SELECT posts.key FROM posts, (\n{sql}) as postsIds where posts.id=postsIds.postid;'
+    req = f'SELECT posts.id, posts.key FROM posts, (\n{sql}) as postsIds where posts.id=postsIds.postid;'
+    if log: print(req)
+    cur = conn.cursor()
+    cur.execute(req)
+    records = cur.fetchall()
+    return records
+
+def find_images(s, conn: Connection, log=False):
+    sql = gen_sql(s, log=log)
+    req = f'SELECT post_images.postid, post_images.key FROM post_images, (\n{sql}) as postsIds where post_images.postid=postsIds.postid;'
     if log: print(req)
     cur = conn.cursor()
     cur.execute(req)
